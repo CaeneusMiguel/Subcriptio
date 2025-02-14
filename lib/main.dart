@@ -1,17 +1,25 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:subcript/Screens/register/registerCompanyScreen.dart';
-import 'package:subcript/utils/common/pushNotification.dart';
-import 'package:subcript/utils/widgets/dashboardScreen.dart';
-import 'package:subcript/Screens/login/loginScreen.dart';
-
-
-
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:subcript/ui/features/common/pushNotification.dart';
+import 'package:subcript/ui/features/common/widgets/dashboardScreen.dart';
+import 'package:subcript/ui/features/document/screens/document_page.dart';
+import 'package:subcript/ui/features/document/screens/document_upload_page.dart';
+import 'package:subcript/ui/features/login/screens/login_page.dart';
+import 'package:subcript/ui/features/login/screens/login_recover_password_page.dart';
+import 'package:subcript/ui/features/login/screens/recover_pin_hub.dart';
+import 'package:subcript/ui/features/login/screens/subcriptio_hub_page.dart';
+import 'package:subcript/ui/features/register/screens/register_company_page.dart';
+import 'package:subcript/ui/features/splash/screens/splash_page.dart';
+import 'package:upgrader/upgrader.dart';
 
 String? userSession = GetStorage().read('token');
+String? type = GetStorage().read('type');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,9 +30,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  initializeDateFormatting('es');
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -44,20 +52,64 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
+    print(userSession);
+    print(type);
     return GetMaterialApp(
-      initialRoute: userSession != null ? '/dashboard' : '/',
+      color: Colors.white,
+      initialRoute: (userSession == null || type == null)
+          ? '/splash'
+          : (type == 'App' ? '/dashboard' : '/subcriptioHub'),
       getPages: [
-        GetPage(name: '/', page: ()=> const LoginScreen()),
-        GetPage(name: '/dashboard', page: ()=> DashBoardScreen()),
-        GetPage(name: '/registerCompany', page: ()=> RegisterCompanyScreen()),
+        GetPage(
+            name: '/',
+            page: () => WillPopScope(
+                  onWillPop: () async {
+                    return false;
+                  },
+                  child: const LoginScreen(),
+                )),
+        GetPage(name: '/splash', page: () => const SplashScreen()),
+        GetPage(
+            name: '/dashboard',
+            page: () => UpgradeAlert(
+                upgrader: Upgrader(messages: UpgraderMessages(code: 'es'),
+                  durationUntilAlertAgain: const Duration(days: 1),),
+                dialogStyle: Platform.isIOS
+                    ? UpgradeDialogStyle.cupertino
+                    : UpgradeDialogStyle.material,
+                showIgnore: false,
+                showLater: true,
+                child: DashBoardScreen(
+                  indexBar: null,
+                ))),
+        GetPage(
+            name: '/dashboardDocument',
+            page: () => DashBoardScreen(
+                  indexBar: 3,
+                )),
+        GetPage(name: '/recoverPass', page: () => const RecoverPassword()),
+        GetPage(name: '/recoverPin', page: () => const RecoverPinHub()),
+        GetPage(
+            name: '/registerCompany',
+            page: () => const RegisterCompanyScreen()),
+        GetPage(name: '/payRoll', page: () => const PayRoll()),
+        GetPage(
+          name: '/subcriptioHub',
+          page: () => WillPopScope(
+            onWillPop: () async {
+              return false;
+            },
+            child: const SubcriptioHubPage(),
+          ),
+        ),
+        GetPage(
+            name: '/documentUploadPage',
+            page: () => const DocumentUploadPage()),
       ],
       debugShowCheckedModeBanner: false,
       useInheritedMediaQuery: true,
-     // builder: DevicePreview.appBuilder,
+      // builder: DevicePreview.appBuilder,
       //locale: DevicePreview.locale(context),
     );
   }
 }
-
-
