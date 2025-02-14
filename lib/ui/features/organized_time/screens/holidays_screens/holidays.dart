@@ -38,6 +38,7 @@ class _HolidaysState extends State<Holidays>
   List<Map<String, dynamic>> listHolidays = [];
   int animationValue = 0;
   bool _isExpanded = false;
+  bool _isButtonDisabled = false;
 
 
   //final _noScreenshot = NoScreenshot.instance;
@@ -77,7 +78,7 @@ class _HolidaysState extends State<Holidays>
       });
 
       List<HolidaysData> newListHollidays =
-          await con.getHolidaysList(_currentPage, status, userSession!.userId);
+          await con.getHolidaysList(_currentPage, status, userSession!.userId!);
       if (newListHollidays.isEmpty) {
         setState(() {
           _hasMoreData = false;
@@ -114,18 +115,22 @@ class _HolidaysState extends State<Holidays>
         cardColor = orangeColorButton;
       }
 
+
+
       listHolidays.add({
-        'startDate': DateFormat('yyyy-MM-dd').format(holidays.startDate.date),
-        'endDate': DateFormat('yyyy-MM-dd').format(holidays.endDate.date),
+        'startDate': holidays.startDate,
+        'endDate': holidays.endDate,
         'status': status,
         'color': cardColor,
         'responseComment': holidays.responseComment
       });
     });
 
+    final DateFormat format = DateFormat("dd-MM-yyyy");
+
     listHolidays.sort((a, b) {
-      DateTime startDateA = DateTime.parse(a['startDate']);
-      DateTime startDateB = DateTime.parse(b['startDate']);
+      DateTime startDateA = format.parse(a['startDate']);
+      DateTime startDateB = format.parse(b['startDate']);
       return startDateA.compareTo(startDateB);
     });
   }
@@ -278,7 +283,7 @@ class _HolidaysState extends State<Holidays>
                                                 ),
                                               ),
                                               Text(
-                                                  DateFormat('dd-MM-yyyy').format(DateTime.parse(element['startDate'])),
+                                                  element['startDate'],
                                                   style:
                                                   const TextStyle(
                                                     fontSize: 15.0,
@@ -309,7 +314,7 @@ class _HolidaysState extends State<Holidays>
                                               color: Colors.black,
                                             ),
                                           ),
-                                          Text(DateFormat('dd-MM-yyyy').format(DateTime.parse(element['endDate'])),
+                                          Text(element['endDate'],
                                               style: const TextStyle(
                                                 fontSize: 15.0,
                                                 color: Colors.black,
@@ -477,10 +482,11 @@ class _HolidaysState extends State<Holidays>
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               const Center(
-                  child: Text(
-                'Filtro de vacaciones ',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              )),
+                child: Text(
+                  'Filtro de vacaciones ',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
               5.height,
               const Divider(
                 color: Colors.black,
@@ -496,74 +502,80 @@ class _HolidaysState extends State<Holidays>
     );
   }
 
+
   Widget _crearOpcion(int valor, String texto) {
     return OpcionWidget(
       valor: valor,
       texto: texto,
       seleccionada: _opcionSeleccionada == valor,
-      onSelected: () async {
-        _opcionSeleccionada = valor;
+      onChanged: (int? newValue) async {
+        if (_isButtonDisabled) return;
 
-        if (_opcionSeleccionada == 1) {
-          status = "0";
-        } else if (_opcionSeleccionada == 2) {
-          status = "1";
-        } else if (_opcionSeleccionada == 3) {
-          status = "2";
-        } else {
-          status = null;
-        }
-        _currentPage = 1;
-        listHolidays = [];
-        await _loadMoreData().then((value) {
-          Navigator.pop(context);
+        setState(() {
+          _isButtonDisabled = true;
+          _opcionSeleccionada = newValue;
         });
+
+        try {
+
+          if (_opcionSeleccionada == 1) {
+            status = "1";
+          } else if (_opcionSeleccionada == 2) {
+            status = "2";
+          } else if (_opcionSeleccionada == 3) {
+            status = "3";
+          } else {
+            status = "4";
+          }
+
+          _currentPage = 1;
+          listHolidays = [];
+          await _loadMoreData().then((_) {
+            Navigator.pop(context);
+          });
+        } finally {
+          setState(() {
+            _isButtonDisabled = false;
+          });
+        }
       },
     );
   }
+
 }
 
-class OpcionWidget extends StatefulWidget {
+class OpcionWidget extends StatelessWidget {
   final int valor;
   final String texto;
   final bool seleccionada;
-  final VoidCallback onSelected;
+  final ValueChanged<int?> onChanged;
 
   const OpcionWidget({
     required this.valor,
     required this.texto,
     required this.seleccionada,
-    required this.onSelected,
-  });
+    required this.onChanged,
+    Key? key,
+  }) : super(key: key);
 
-  @override
-  _OpcionWidgetState createState() => _OpcionWidgetState();
-}
-
-class _OpcionWidgetState extends State<OpcionWidget> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Row(
         children: [
-          Radio<int>(
+          Radio<int?>(
             activeColor: mainGreenColorButton,
-            value: widget.valor,
-            groupValue: widget.seleccionada ? widget.valor : null,
-            onChanged: (_) {
-              widget.onSelected();
-            },
+            value: valor,
+            groupValue: seleccionada ? valor : null, // Define el valor actual seleccionado
+            onChanged: onChanged, // Llama al callback al cambiar
           ),
-          Text(widget.texto),
+          Text(texto),
         ],
       ),
-      onTap: () {
-        widget.onSelected();
-      },
+      onTap: () => onChanged(valor), // Cambia la selección al hacer tap
     );
   }
 }
-
 
 class CustomFloatingActions extends StatefulWidget {
   final VoidCallback onRefresh;

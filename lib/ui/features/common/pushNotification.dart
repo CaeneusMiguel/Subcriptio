@@ -109,7 +109,6 @@ class NotificationHelper{
 
 Future<void> localBackgroundHandler(NotificationResponse data) async{
 
-  print(data.toString());
   print("localBackgroundHandler :");
   print(data.notificationResponseType ==
       NotificationResponseType.selectedNotification

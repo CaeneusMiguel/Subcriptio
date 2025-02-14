@@ -8,10 +8,22 @@ class HolidaysProvider extends GetConnect {
 
   Future<Response> getListHolidays(
       int page, String? status, String idUser) async {
-    Response response = await post('$url/holidays/get', {
+    Map<String, dynamic> filterFilters = {
+      "user": idUser,
+    };
+
+    if (status != "4") {
+      filterFilters["accepted"] = status;
+    }
+
+    Response response = await post('$url/holidays-aux/get', {
+
+
+      "filter_orders": {},
+      "filter_filters": filterFilters,
+      "limit": 20,
       "page": page,
-      "maxResultPerPage": 20,
-      "filters": {"user": idUser, "accepted": status}
+
     }, headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json'
@@ -25,14 +37,9 @@ class HolidaysProvider extends GetConnect {
     return response;
   }
 
-  Future<Response> requestHolidays(String? message, String? idUser,
-      int? companyId, String? startDate, String? endDate) async {
-    Response response = await post('$url/holidays/create', {
-      "user_id": idUser,
-      "company_id": companyId,
-      "start_date": startDate,
-      "end_date": endDate,
-      "petition_comment": message
+  Future<Response> requestHolidays(String? message, String? idUser, int? companyId, String? startDate, String? endDate) async {
+    Response response = await post('$url/holidays-aux/create', {
+      "userSelected": idUser, "startDate": startDate, "endDate": endDate, "description": message
     }, headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json'

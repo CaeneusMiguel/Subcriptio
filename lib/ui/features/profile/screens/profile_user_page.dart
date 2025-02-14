@@ -36,13 +36,11 @@ class _ProfileUserState extends State<ProfileUser> {
   Location location = Location();
   DocumentController con = Get.put(DocumentController());
   ValueNotifier<dynamic> result = ValueNotifier(null);
-  static const platform = MethodChannel('com.example.app/nfc');
 
   @override
   void initState() {
     userSession = UserLogin.fromJson(GetStorage().read('user'));
     _loaddata();
-    //startListeningForTags();
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
       statusBarColor: Colors.transparent,
@@ -52,18 +50,8 @@ class _ProfileUserState extends State<ProfileUser> {
     ));
   }
 
-  static Future<void> startListeningForTags() async {
-    platform.setMethodCallHandler((MethodCall call) async {
-      if (call.method == "onTagDetected") {
-        String tagId = call.arguments as String;
-        // Maneja la etiqueta aquí, como abrir una pantalla específica
-      }
-    });
-  }
 
   Future<Uint8List?> _loaddata() async {
-    // await UserProvider().getData(token).then((value) {
-    //  code = UserClassFull.fromJson(GetStorage().read('userProfile') ?? {});
     imageFile ??= GetStorage().read("image");
     setState(() {});
   }
@@ -82,7 +70,6 @@ class _ProfileUserState extends State<ProfileUser> {
   Future<File?> _loadImageData() async {
     String? img = await con.getImage(userSession?.userId);
     imageDataUint8 = base64Decode(img ?? '');
-
     // imageDataUint8=await con.getImageFromAPI(token!, id ?? '');
     //GetStorage().write('image',Uint8List.fromList(image.map((element) => element).toList()));
 
@@ -260,7 +247,7 @@ class _ProfileUserState extends State<ProfileUser> {
                               activeCancel: true,
                               title: "Eliminar cuenta",
                               message:
-                                  "Desea enviar una solicitud para eliminar su cuenta?. Su cuenta sera eliminada en un plazo de 24-48 horas.",
+                                  "¿Deseas enviar una solicitud para eliminar tu cuenta? Tu cuenta será eliminada en un plazo de 24 a 48 horas",
                               onConfirm: () {
                                 Get.offNamedUntil('/', (route) => false);
                               },
@@ -325,7 +312,7 @@ class _ProfileUserState extends State<ProfileUser> {
                               activeCancel: true,
                               title: "Cerrar sesión",
                               message:
-                                  "Se va a cerrar sesión, estas seguro que deseas cerrarla?. ",
+                                  "¿Estás seguro de que deseas cerrar sesión?",
                               onConfirm: () {
                                 GetStorage().erase();
                                 Get.offNamedUntil('/', (route) => false);
@@ -427,15 +414,13 @@ class _ProfileUserState extends State<ProfileUser> {
 
     List<String>? parts = image?.name.split('.');
 
-    String fileExtension = parts!.last;
 
-    //image.path
     if (image != null) {
       setState(() {
         imageFile = File(image.path);
         GetStorage().write("image", imageFile);
         UserProvider()
-            .updateImage(userSession?.userId, imageFile, fileExtension);
+            .updateImage(userSession?.userId, imageFile);
       });
     }
   }

@@ -59,7 +59,6 @@ class PasswordChangeController extends GetxController {
     Response responseApi = await UserProvider()
         .updatePin(userSession?.userId,newPinWord);
 
-    print(responseApi.body);
 
     if(responseApi.statusCode == 200){
       pinWordController.text='';

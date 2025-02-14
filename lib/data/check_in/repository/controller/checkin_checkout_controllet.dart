@@ -36,18 +36,16 @@ class ChekingCheckoutController extends GetxController {
   Future<void> chekingCheckout() async {
     String userName= cifController.text.trim();
     String pin= pinController.text.trim();
+    String companyId= GetStorage().read('company_id');
     Response responseApi =
-    await ChekingProvider().checkInCheckOut(pin, userName);
-
-    if (responseApi.body != null) {
+    await ChekingProvider().cheking(null,null,null,"Hub",companyId,userName,pin);
+    if (responseApi.body['success'] == true) {
       Get.snackbar(
           'Fichar', responseApi.body['message'],
           backgroundColor: mainGreenColorButton, colorText: Colors.white);
-    } else {
-      Get.snackbar('Error', 'Sesión expirada,reiniciando',
-          backgroundColor: const Color(0xFFe5133d), colorText: Colors.white);
-      Get.offNamedUntil('/', (route) => false);
-
+    } else{
+      Get.snackbar('Error', responseApi.body['message'],
+          backgroundColor: const Color(0xFF0d92c0d), colorText: Colors.white);
     }
   }
 }

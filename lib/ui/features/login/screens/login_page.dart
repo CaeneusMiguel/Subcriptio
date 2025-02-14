@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textStyle: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     labelStyle: const TextStyle(color: Colors.black),
-                    labelText: "Usuario",
+                    labelText: "DNI",
                     contentPadding: const EdgeInsets.fromLTRB(30, 18, 18, 18),
                     border: OutlineInputBorder(
                       borderSide: const BorderSide(color: Colors.black),
@@ -120,6 +120,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ).animate().fade(delay: 600.ms).slideY()),
             40.height,
+            GestureDetector(
+              onTap: () {
+                Get.toNamed('/recoverPass');
+              },
+              child: Center(
+                child: const Text('¿Olvidaste la contraseña?',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: mainColorBlue)).animate().fade(delay: 700.ms).slideY(),
+              ),
+            ),
+            40.height,
             ButtonMaterialCustom(
                 nameButton: 'Iniciar Sesión',
                 pHorizontal: 40,
@@ -133,9 +143,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 colorButton: mainColorBlue,
                 textColor: Colors.white,
-                textSize: 16).animate().fade(delay: 700.ms).slideY(),
-            40.height,
-            Row(
+                textSize: 16).animate().fade(delay: 800.ms).slideY(),
+
+            /*Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Aún no tienes cuenta? ",
@@ -149,18 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 )
               ],
             ).animate().fade(delay: 800.ms).slideY(),
-            30.height,
-            GestureDetector(
-              onTap: () {
-                Get.toNamed('/recoverPass');
-              },
-              child: Center(
-                child: const Text('¿Olvidaste la contraseña?',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: mainColorBlue)).animate().fade(delay: 900.ms).slideY(),
-              ),
-            ),
+            30.height,*/
+
             Expanded(child: Container()),
-            Center(child:  Text("© $currentYear Studio128k.",style: const TextStyle(fontSize:16)).animate().fade(delay: 1000.ms).slideY()),
+            Center(child:  Text("© $currentYear Studio128k.",style: const TextStyle(fontSize:16)).animate().fade(delay: 900.ms).slideY()),
             10.height,
           ],
         ),
@@ -183,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: mainColorBlue,
           ),
         ),
-      ),
+      ).animate().fade(delay: 1000.ms).slideY(),
     );
   }
 }

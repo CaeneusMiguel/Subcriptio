@@ -7,8 +7,8 @@ String documentToJson(UserLogin data) => json.encode(data.toJson());
 class UserLogin {
   String token;
   dynamic userProyect;
-  List<String> userRoles;
-  String userId;
+  List<String>? userRoles;
+  String? userId;
   String? userName;
   String? userSurnames;
   String? userTown;
@@ -81,7 +81,7 @@ class UserLogin {
   Map<String, dynamic> toJson() => {
         "token": token,
         "user_proyect": userProyect,
-        "user_roles": List<dynamic>.from(userRoles.map((x) => x)),
+        "user_roles": List<dynamic>.from(userRoles?.map((x) => x) ?? []),
         "user_id": userId,
         "user_name": userName,
         "user_surnames": userSurnames,

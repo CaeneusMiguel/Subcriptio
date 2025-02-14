@@ -7,8 +7,8 @@ String holidaysToJson(HolidaysData data) => json.encode(data.toJson());
 
 class HolidaysData {
   int id;
-  Date startDate;
-  Date endDate;
+  String startDate;
+  String endDate;
   String? petitionComment;
   String? responseComment;
   bool? accepted;
@@ -34,8 +34,8 @@ class HolidaysData {
 
   factory HolidaysData.fromJson(Map<String, dynamic> json) => HolidaysData(
         id: json["id"],
-        startDate: Date.fromJson(json["startDate"]),
-        endDate: Date.fromJson(json["endDate"]),
+        startDate: json["startDate"],
+        endDate: json["endDate"],
         petitionComment: json["petitionComment"],
         responseComment: json["responseComment"],
         accepted: json["accepted"],
@@ -43,34 +43,12 @@ class HolidaysData {
 
   Map<String, dynamic> toJson() => {
         "id": id,
-        "startDate": startDate.toJson(),
-        "endDate": endDate.toJson(),
+        "startDate": startDate,
+        "endDate": endDate,
         "petitionComment": petitionComment,
         "responseComment": responseComment,
         "accepted": accepted,
       };
 }
 
-class Date {
-  DateTime date;
-  int timezoneType;
-  String timezone;
 
-  Date({
-    required this.date,
-    required this.timezoneType,
-    required this.timezone,
-  });
-
-  factory Date.fromJson(Map<String, dynamic> json) => Date(
-        date: DateTime.parse(json["date"]),
-        timezoneType: json["timezone_type"],
-        timezone: json["timezone"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "date": date.toIso8601String(),
-        "timezone_type": timezoneType,
-        "timezone": timezone,
-      };
-}

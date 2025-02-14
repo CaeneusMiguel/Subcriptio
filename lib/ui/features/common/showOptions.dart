@@ -57,7 +57,7 @@ void showOptionParameter(BuildContext context, List<Purpose> listOption,
                         onTap: () async {
                           Response validatorPause = await con.pause(e.id);
 
-                          if (validatorPause.body['data']['id'] != null) {
+                          if (validatorPause.body['success'] == true) {
                             setState(() {
                               Purpose element = e;
                               callback(true);
@@ -110,7 +110,7 @@ void showOptionParameter(BuildContext context, List<Purpose> listOption,
 }
 
 void showOptionParameterCheckInCheckOut(BuildContext context,
-    List<Purpose> listOption, String userName, String pin) {
+    List<Purpose> listOption, String userName, String pin,String? companyId) {
   showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
@@ -154,7 +154,7 @@ void showOptionParameterCheckInCheckOut(BuildContext context,
                       GestureDetector(
                         onTap: () async {
                           await ChekingProvider()
-                              .checkInCheckOutPause(pin, userName, e.id, null);
+                              .checkInCheckOutPause(pin, userName, e.id,companyId );
 
                           setState(() {
                             Navigator.pop(context);

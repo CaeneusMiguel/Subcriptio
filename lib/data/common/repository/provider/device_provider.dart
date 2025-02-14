@@ -13,14 +13,11 @@ class DeviceProvider extends GetConnect {
   String? token = GetStorage().read('token');
 
 
-  Future<void> postTokenFireBase(String tokenFireBase) async {
-    Response response = await post('$url/user/update-fcm-token',
-        {
-          "fcm_token": tokenFireBase,
+  Future<void> postTokenFireBase(String tokenFireBase,String id) async {
+    Response response = await post('$url/users/update-fcm-token', {"tokenFirebase": tokenFireBase,"userId": id
 
         },
         headers: {'Authorization': 'Bearer $token','Content-Type': 'application/json'});
-
 
     if(response.hasError==401){
      // Get.snackbar('Error', 'error al actualizar FCM',backgroundColor: const Color(0xFFe5133d), colorText: Colors.white);

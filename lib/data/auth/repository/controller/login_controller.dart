@@ -16,27 +16,29 @@ class LoginController extends GetxController {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    Response responseApi = await UserProvider().login(email, password);
+    Response responseApi = await UserProvider().login(email, password,"App");
 
     if (responseApi.body['data'] != null) {
-      //log(responseApi.body['token']);
       String token = responseApi.body['data']['token'];
-      //log("${responseApi.body['user']}");
+      print(responseApi.body['data']);
+      String type = responseApi.body['data']['device'];
 
       GetStorage().write(
           'user',
           responseApi.body[
-              'data']); // Actualiza la información del usuario en GetStorage
+              'data']);
+      GetStorage().write('type', type);
       GetStorage().write('token', token).then((value) async {
         await FirebaseApi().initNotifications();
         print(tokenFireBase);
-        DeviceProvider().postTokenFireBase(tokenFireBase ?? '');
+        DeviceProvider().postTokenFireBase(tokenFireBase ?? '',responseApi.body['data']['id']);
       });
+
 
       emailController.text = "";
       passwordController.text = "";
 
-      Get.toNamed('/dashboard');
+      Get.offAndToNamed('/dashboard');
     } else {
       Get.snackbar('Login fallido', 'Error en las credenciales',
           backgroundColor: const Color(0xFFe5133d), colorText: Colors.white);

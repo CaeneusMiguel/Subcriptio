@@ -23,7 +23,7 @@ class HolidaysController extends GetxController {
 
     if (responseApi.body['data'] != null) {
       List<HolidaysData> listHolidays =
-          HolidaysData.fromJsonList(responseApi.body['data'][0]);
+          HolidaysData.fromJsonList(responseApi.body['data']['holidays']);
       return listHolidays;
     }
       return [];

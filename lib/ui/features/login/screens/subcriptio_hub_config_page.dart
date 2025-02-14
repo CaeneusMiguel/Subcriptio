@@ -23,8 +23,8 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
   FocusNode password = FocusNode();
   FocusNode confirmPassword = FocusNode();
 
-  bool _obscurePassword = true; // Estado para ocultar/mostrar contraseña
-  bool _obscureConfirmPassword = true; // Estado para ocultar/mostrar confirmación de contraseña
+  bool _obscurePassword = true;
+
 
   @override
   Widget build(BuildContext context) {
@@ -54,31 +54,47 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  40.height,
+                  20.height,
                   Center(
                     child: RichText(
+                      textAlign: TextAlign.left,
                       text: const TextSpan(
-                        style: TextStyle(fontSize: 16, color: Colors.black),
+                        style: TextStyle(fontSize: 16, color: Colors.black, height: 1.5),
                         children: <TextSpan>[
+                          TextSpan(text: 'Bienvenido a la configuración del '),
                           TextSpan(
-                              text:
-                              'Introduce tu nombre de usuario y contraseña para tu '),
-                          TextSpan(
-                            text: 'Subcriptio HUB',
+                            text: 'Modo Hub',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: mainColorBlue,
                             ),
                           ),
+                          TextSpan(
+                            text: '.\n\n',
+                          ),
+                          TextSpan(
+                            text: '○  CIF de la empresa: ',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text: 'Código de identificación fiscal de tu empresa.\n\n',
+                          ),
+                          TextSpan(
+                            text: '○  Cuenta Administradora: ',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text: 'Introduce el DNI y la contraseña de un administrador autorizado.\n\n',
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  60.height,
+                  10.height,
                   AppTextField(
-                    controller: con.userController,
-                    focus: userHub,
-                    nextFocus: cif,
+                    controller: con.cifController,
+                    focus: cif,
+                    nextFocus: password,
                     textInputAction: TextInputAction.next,
                     textFieldType: TextFieldType.NAME,
                     cursorColor: Colors.black12,
@@ -87,7 +103,7 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
                     primaryTextStyle(color: Colors.black54, size: 16),
                     decoration: InputDecoration(
                       labelStyle: const TextStyle(color: Colors.black),
-                      label: const Text('Usuario',
+                      label: const Text('CIF',
                           style: TextStyle(fontFamily: 'Vagrounded')),
                       contentPadding: const EdgeInsets.fromLTRB(30, 18, 18, 18),
                       border: OutlineInputBorder(
@@ -107,9 +123,9 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
                   ),
                   25.height,
                   AppTextField(
-                    controller: con.cifController,
-                    focus: cif,
-                    nextFocus: password,
+                    controller: con.userController,
+                    focus: userHub,
+                    nextFocus: cif,
                     textInputAction: TextInputAction.next,
                     textFieldType: TextFieldType.NAME,
                     cursorColor: Colors.black12,
@@ -118,7 +134,7 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
                     primaryTextStyle(color: Colors.black54, size: 16),
                     decoration: InputDecoration(
                       labelStyle: const TextStyle(color: Colors.black),
-                      label: const Text('CIF',
+                      label: const Text('DNI',
                           style: TextStyle(fontFamily: 'Vagrounded')),
                       contentPadding: const EdgeInsets.fromLTRB(30, 18, 18, 18),
                       border: OutlineInputBorder(
@@ -219,14 +235,29 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
                   }
 
                   Response response = await UserProvider()
-                      .loginCifCompany(con.userController.text.trim(),con.passwordController.text.trim(),con.cifController.text.trim());
+                      .loginCifCompany(con.userController.text.trim(),con.passwordController.text.trim(),con.cifController.text.trim(),"Hub");
 
-                  print(response.body);
+                  String token = response.body['data']['token'];
+                  String type = response.body['data']['device'];
+                  String idCompany = response.body['data']['company_id'].toString();
+
+                  GetStorage().write('type', type);
+                  GetStorage().write('company_id', idCompany);
+                  GetStorage().write('token', token);
+
                   if (response.body['success'] == true) {
                     Response responseApi = await ChekingProvider()
                         .listPausePurposeHub(con.cifController.text.trim());
 
                     if (responseApi.body['success'] == true) {
+                      if(responseApi.body['data'] == null){
+                        GetStorage()
+                            .write('UserHubPauseActive', false);
+                      }else{
+                        GetStorage()
+                            .write('UserHubPauseActive', true);
+                      }
+
                       GetStorage()
                           .write('UserHub', con.userController.text.trim());
                       GetStorage().write('CifHub', con.cifController.text.trim());
@@ -238,7 +269,7 @@ class _SubcriptioHubConfigPageState extends State<SubcriptioHubConfigPage> {
                       con.passwordController.text = "";
                       con.rePasswordController.text = "";
 
-                      Get.toNamed('/subcriptioHub');
+                      Get.offAndToNamed('/subcriptioHub');
                     } else {
                       Get.snackbar(
                         'Error',

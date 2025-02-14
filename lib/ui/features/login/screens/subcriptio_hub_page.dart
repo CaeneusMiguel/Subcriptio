@@ -27,12 +27,15 @@ class _SubcriptioHubPageState extends State<SubcriptioHubPage> {
   FocusNode password = FocusNode();
   FocusNode userName = FocusNode();
   String? currentYear;
-  bool _obscurePin = true; // Controla si el PIN está oculto o visible
+  bool _obscurePin = true;
   ChekingCheckoutController con = Get.put(ChekingCheckoutController());
-
+  bool? activePauses= false;
+  String? companyId;
   @override
   void initState() {
     super.initState();
+    companyId= GetStorage().read('company_id');
+    activePauses = GetStorage().read('UserHubPauseActive');
     currentYear = DateTime.now().year.toString();
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(
       statusBarColor: Colors.transparent,
@@ -75,7 +78,7 @@ class _SubcriptioHubPageState extends State<SubcriptioHubPage> {
                   focus: userName,
                   autofocus: false,
                   border: 25.0,
-                  nameLabel: "Usuario",
+                  nameLabel: "DNI",
                 ).animate().fade(delay: 500.ms).slideY(),
               ),
               30.height,
@@ -122,6 +125,20 @@ class _SubcriptioHubPageState extends State<SubcriptioHubPage> {
                 ).animate().fade(delay: 600.ms).slideY(),
               ),
               40.height,
+              GestureDetector(
+                onTap: () {
+                  Get.toNamed('/recoverPin');
+                },
+                child: Center(
+                  child: const Text('¿Olvidaste tu pin?',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white))
+                      .animate()
+                      .fade(delay: 900.ms)
+                      .slideY(),
+                ),
+              ).animate().fade(delay: 700.ms).slideY(),
+              40.height,
               ButtonMaterialCustom(
                       nameButton: 'Fichar',
                       pHorizontal: 80,
@@ -147,58 +164,46 @@ class _SubcriptioHubPageState extends State<SubcriptioHubPage> {
                   .fade(delay: 700.ms)
                   .slideY(),
               20.height,
+              activePauses== true  ?
               ButtonMaterialCustom(
                       nameButton: 'Fichar Pausa',
                       pHorizontal: 55,
                       pVertical: 15,
                       borderSize: 6,
                       onPressed: () async {
-                        FocusManager.instance.primaryFocus?.unfocus();
-
-                        int response = await ChekingProvider()
-                            .checkInCheckOutPause(con.pinController.text.trim(),
-                                con.cifController.text.trim(), null, null);
-                        if (response == 1) {
-                          List<Purpose> options = await con.pausePurposeList();
-                          if (options.isNotEmpty) {
-                            showOptionParameterCheckInCheckOut(
-                                context,
-                                options,
-                                con.cifController.text.trim(),
-                                con.pinController.text.trim());
-                            con.cifController.text = '';
-                            con.pinController.text = '';
-                          } else {
-                            Get.snackbar('Error',
-                                'No se han encontrado descansos de empresa',
-                                backgroundColor: redColorButton,
-                                colorText: Colors.white);
-                          }
-                        } else {
-                          con.cifController.text = '';
-                          con.pinController.text = '';
-                        }
+                         FocusManager.instance.primaryFocus?.unfocus();
+                         Response response=await ChekingProvider()
+                             .getIsBreakIn(null, con.cifController.text.trim(),);
+                         if(response.body['success'] == false) {
+                           List<Purpose> options = await con.pausePurposeList();
+                           if (options.isNotEmpty) {
+                             showOptionParameterCheckInCheckOut(
+                                 context,
+                                 options,
+                                 con.cifController.text.trim(),
+                                 con.pinController.text.trim(), companyId);
+                             con.cifController.text = '';
+                             con.pinController.text = '';
+                           } else {
+                             Get.snackbar('Error',
+                                 'No se han encontrado descansos de empresa',
+                                 backgroundColor: redColorButton,
+                                 colorText: Colors.white);
+                           }
+                         }else{
+                           await ChekingProvider()
+                               .checkInCheckOutPause(con.pinController.text.trim(), con.cifController.text.trim(), null,companyId );
+                           con.cifController.text = '';
+                           con.pinController.text = '';
+                         }
                       },
                       colorButton: orangeColorButton,
                       textColor: Colors.white,
                       textSize: 16)
                   .animate()
                   .fade(delay: 700.ms)
-                  .slideY(),
-              40.height,
-              GestureDetector(
-                onTap: () {
-                  Get.toNamed('/recoverPin');
-                },
-                child: Center(
-                  child: const Text('¿Olvidaste tu pin?',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white))
-                      .animate()
-                      .fade(delay: 900.ms)
-                      .slideY(),
-                ),
-              ).animate().fade(delay: 700.ms).slideY(),
+                  .slideY(): Container(),
+
               40.height,
               30.height,
               Expanded(child: Container()),
@@ -221,8 +226,10 @@ class _SubcriptioHubPageState extends State<SubcriptioHubPage> {
                 builder: (context) {
                   return ConfirmDialogHub(
                     title: "Cerrar Hub",
-                    message: "Por favor, introduce tus credenciales.",
-                    onConfirm: () {},
+                    message: "Introduce las credenciales del administrador que configuró el Modo Hub.",
+                    onConfirm: () {
+
+                    },
                   );
                 },
               );

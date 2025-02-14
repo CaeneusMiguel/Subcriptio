@@ -24,7 +24,6 @@ import 'package:subcript/ui/features/common/widgets/customAlertDialogComment.dar
 import 'package:subcript/ui/features/common/widgets/customAlertDialogInfo.dart';
 import 'package:subcript/ui/theme/colors.dart';
 
-
 class CheckinPage extends StatefulWidget {
   const CheckinPage({super.key});
 
@@ -71,7 +70,7 @@ class _CheckinPageState extends State<CheckinPage> with WidgetsBindingObserver {
   CompanyConfi? configCompany;
   Location location = Location();
   final GeolocatorPlatform geolocatorAndroid = GeolocatorPlatform.instance;
-bool activeButton=true;
+  bool activeButton = true;
   ChekingController con = Get.put(ChekingController());
 
   @override
@@ -80,15 +79,12 @@ bool activeButton=true;
     year = dateNow.year.toString();
     userSession = UserLogin.fromJson(GetStorage().read('user'));
     name = userSession?.userName ?? '';
-    _getConfig();
     getIsCheking();
 
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
       statusBarColor: Colors.transparent,
-      // Cambia el color de fondo de la barra de estado
-      statusBarIconBrightness:
-          Brightness.dark, // Cambia el color del texto en la barra de estado
+      statusBarIconBrightness: Brightness.dark,
     ));
     WidgetsBinding.instance?.addObserver(this);
   }
@@ -98,11 +94,13 @@ bool activeButton=true;
   }
 
   Future<void> _getConfig() async {
-    configCompany = await con.getConfigCompany();
+    configCompany =
+        await con.getConfigCompany(userSession?.companyId.toString());
   }
 
   void _startTimerCheckin() {
-    _timerCheckin = Timer.periodic(const Duration(seconds: 1), _updateTimerChekin);
+    _timerCheckin =
+        Timer.periodic(const Duration(seconds: 1), _updateTimerChekin);
   }
 
   void _updateTimer(Timer timer) {
@@ -193,15 +191,14 @@ bool activeButton=true;
 
   Future<void> getIsCheking() async {
     await con.getIsCheking().then((value) async {
-      if (value.body['data']['isCheckIn'] == false) {
+      if (value.body['data']['isCheckIn'] == false ) {
         isPlaying = false;
         isVisibleTempCheckin = false;
         buttonColorPlay = Colors.grey;
         iconDataPlay = Icons.play_arrow;
         status = "Inactiva";
         timeAnimationButton = 0;
-        DeviceProvider()
-            .postTokenFireBase(GetStorage().read('tokenMessage') ?? '');
+        //DeviceProvider().postTokenFireBase(GetStorage().read('tokenMessage') ?? '');
       } else {
         isPlaying = true;
         buttonColorPlay = greenColorButton;
@@ -215,8 +212,8 @@ bool activeButton=true;
         _startTimerCheckin();
         status = "Activa";
         timeAnimationButton = 3;
-        await con.getIsBreakIn().then((value) {
-          if (value.body['data']['isBreakIn'] == false) {
+        await con.getIsBreakIn(userSession?.companyId.toString()).then((value) {
+          if (value.body['data'] == null) {
             isVisibleTempCheckin = true;
             isVisibleTemp = false;
             isPause = false;
@@ -224,8 +221,7 @@ bool activeButton=true;
           } else {
             isVisibleTemp = true;
             isVisibleTempCheckin = false;
-            purposeDataCont =
-                PurposeDataCont.fromJson(value.body['data']['dataPurpose']);
+            purposeDataCont = PurposeDataCont.fromJson(value.body['data']);
 
             _totalSeconds = (purposeDataCont!.estimatedTime! * 60).toInt();
             status = "Pausa";
@@ -250,20 +246,32 @@ bool activeButton=true;
           }
         });
       }
+      await _getConfig();
+
       isDataCarged = true;
       action = true;
       setState(() {});
-      opciones = await con.getPurposeList();
+      opciones = await con.getPurposeList(userSession?.companyId.toString());
       if (configCompany?.includeCheckinLocation == true) {
         if (Platform.isIOS) {
           determinePermision();
-          geoloc.Position position = await geoloc.Geolocator.getCurrentPosition(
-              forceAndroidLocationManager: true,
-              desiredAccuracy: geoloc.LocationAccuracy.low);
+          try {
+            geoloc.Position position =
+                await geoloc.Geolocator.getCurrentPosition(
+              locationSettings: geoloc.AppleSettings(
+                  accuracy: geoloc.LocationAccuracy.medium),
+            ).timeout(const Duration(seconds: 2), onTimeout: () {
+              return Future.error(
+                  'Timeout: No se pudo obtener la ubicación a tiempo');
+            });
 
-          latitude = position.latitude;
+            latitude = position.latitude;
 
-          longitude = position.longitude;
+            longitude = position.longitude;
+          } catch (e) {
+            latitude = null;
+            longitude = null;
+          }
         } else {
           final hasPermission = await _handlePermission();
 
@@ -271,13 +279,23 @@ bool activeButton=true;
             return;
           }
 
-          final position = await geolocatorAndroid.getCurrentPosition(
-              locationSettings:
-                  AndroidSettings(accuracy: geoloc.LocationAccuracy.medium));
+          try {
+            geoloc.Position position =
+                await geoloc.Geolocator.getCurrentPosition(
+                        locationSettings: geoloc.AndroidSettings(
+                            accuracy: geoloc.LocationAccuracy.medium))
+                    .timeout(const Duration(seconds: 2), onTimeout: () {
+              return Future.error(
+                  'Timeout: No se pudo obtener la ubicación a tiempo');
+            });
 
-          longitude = position.longitude;
+            longitude = position.longitude;
 
-          latitude = position.latitude;
+            latitude = position.latitude;
+          } catch (e) {
+            latitude = null;
+            longitude = null;
+          }
         }
       }
     });
@@ -293,7 +311,7 @@ bool activeButton=true;
   }
 
   void togglePlayClose() {
-    setState(()  {
+    setState(() {
       positionCharged = true;
       if (action != false) {
         isPlaying = !isPlaying;
@@ -301,7 +319,8 @@ bool activeButton=true;
         if (isPlaying) {
           isPause = !isPause;
 
-          con.cheking(latitude, longitude,comment);
+          con.cheking(latitude, longitude, comment, "App",
+              userSession?.companyId.toString());
 
           GetStorage().write("activeCheking", isPlaying);
           isVisibleTempCheckin = true;
@@ -325,33 +344,34 @@ bool activeButton=true;
             isVisibleTempCheckin = true;
             active = !active;
           } else {
-            if(((_elapsedSecondsCheckin)~/ 3600)<1) {
+            if (((_elapsedSecondsCheckin) ~/ 3600) < 1) {
               showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (context) =>
-                      CustomAlertDialogComment(
+                  builder: (context) => CustomAlertDialogComment(
                         title: "Terminar jornada",
-                        message: "¿Estas seguro de que quieres finalizar la jornada laboral?. Llevas menos de 1 hora trabajando.",
+                        message:
+                            "¿Estas seguro de que quieres finalizar la jornada laboral?. Llevas menos de 1 hora trabajando.",
                         onConfirm: () async {
                           //print('Comentario: $comment');
-                          if(activeButton) {
-                            activeButton=false;
-                            await con.cheking(latitude, longitude, comment);
+                          if (activeButton) {
+                            activeButton = false;
+                            await con.cheking(latitude, longitude, comment,
+                                "App", userSession?.companyId.toString());
 
                             GetStorage().write("activeCheking", isPlaying);
                             isPause = !isPause;
                             buttonColorPlay =
-                            isPlaying ? greenColorButton : Colors.grey;
+                                isPlaying ? greenColorButton : Colors.grey;
                             iconDataPlay =
-                            isPlaying ? Icons.stop : Icons.play_arrow;
+                                isPlaying ? Icons.stop : Icons.play_arrow;
                             status = "Inactiva";
                             isVisibleTempCheckin = false;
                             timeAnimationButton = 0;
                             active = !active;
                             _resetTimerCheckin();
                             Navigator.of(context).pop();
-                            activeButton=true;
+                            activeButton = true;
                           }
                         },
                         onCancel: () {
@@ -367,27 +387,23 @@ bool activeButton=true;
                             comment = value;
                           });
                         },
-                      )
-              );
-            }else{
-              if(activeButton) {
-                activeButton=false;
-                con.cheking(latitude, longitude, comment);
+                      ));
+            } else {
+              if (activeButton) {
+                activeButton = false;
+                con.cheking(latitude, longitude, comment, "App",
+                    userSession?.companyId.toString());
                 GetStorage().write("activeCheking", isPlaying);
                 isPause = !isPause;
-                buttonColorPlay =
-                isPlaying ? greenColorButton : Colors.grey;
-                iconDataPlay =
-                isPlaying ? Icons.stop : Icons.play_arrow;
+                buttonColorPlay = isPlaying ? greenColorButton : Colors.grey;
+                iconDataPlay = isPlaying ? Icons.stop : Icons.play_arrow;
                 status = "Inactiva";
                 isVisibleTempCheckin = false;
                 timeAnimationButton = 0;
                 active = !active;
                 _resetTimerCheckin();
-                activeButton=true;
-
+                activeButton = true;
               }
-
             }
           }
         }
@@ -428,13 +444,22 @@ bool activeButton=true;
     setState(() {});
     if (Platform.isIOS) {
       determinePermision();
-      geoloc.Position position = await geoloc.Geolocator.getCurrentPosition(
-          forceAndroidLocationManager: true,
-          desiredAccuracy: geoloc.LocationAccuracy.medium);
+      try {
+        geoloc.Position position = await geoloc.Geolocator.getCurrentPosition(
+          locationSettings:
+              geoloc.AppleSettings(accuracy: geoloc.LocationAccuracy.medium),
+        ).timeout(const Duration(seconds: 2), onTimeout: () {
+          return Future.error(
+              'Timeout: No se pudo obtener la ubicación a tiempo');
+        });
 
-      latitude = position.latitude;
+        latitude = position.latitude;
 
-      longitude = position.longitude;
+        longitude = position.longitude;
+      } catch (e) {
+        latitude = null;
+        longitude = null;
+      }
     } else {
       final hasPermission = await _handlePermission();
 
@@ -463,14 +488,22 @@ bool activeButton=true;
           ),
         );
       }
+      try {
+        geoloc.Position position = await geoloc.Geolocator.getCurrentPosition(
+                locationSettings: geoloc.AndroidSettings(
+                    accuracy: geoloc.LocationAccuracy.medium))
+            .timeout(const Duration(seconds: 2), onTimeout: () {
+          return Future.error(
+              'Timeout: No se pudo obtener la ubicación a tiempo');
+        });
 
-      final position = await geolocatorAndroid.getCurrentPosition(
-          locationSettings:
-              AndroidSettings(accuracy: geoloc.LocationAccuracy.medium));
+        longitude = position.longitude;
 
-      longitude = position.longitude;
-
-      latitude = position.latitude;
+        latitude = position.latitude;
+      } catch (e) {
+        latitude = null;
+        longitude = null;
+      }
     }
 
     togglePlayClose();
@@ -601,7 +634,7 @@ bool activeButton=true;
                   width: 80,
                   height: 80,
                   child: CircularProgressIndicator(
-                    color: mainColorBlue.withOpacity(0.9),
+                    color: mainColorBlue,
                     strokeWidth: 10,
                   ),
                 ),
@@ -748,6 +781,7 @@ bool activeButton=true;
                                     children: [
                                       positionCharged == false
                                           ? const CircularProgressIndicator(
+                                        color: mainColorBlue,
                                               strokeWidth: 5,
                                             )
                                           : Icon(
@@ -773,6 +807,7 @@ bool activeButton=true;
                                     child: Center(
                                       child: positionCharged == false
                                           ? const CircularProgressIndicator(
+                                        color: mainColorBlue,
                                               strokeWidth: 5,
                                             )
                                           : Icon(
@@ -786,37 +821,40 @@ bool activeButton=true;
                                 ),
                         ),
                       ),
-                      isPause != true
-                          ? Positioned(
-                              bottom:
-                                  -0.00 * MediaQuery.of(context).size.height,
-                              right: MediaQuery.of(context).size.height * 0.10,
-                              child: Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50.0),
-                                  // Ajusta el radio según tus necesidades
-                                  border: Border.all(
-                                    color:
-                                        Colors.white, // Color del borde blanco
-                                    width: 4.0, // Ancho del borde
+                      configCompany!.includePauses
+                          ? isPause != true
+                              ? Positioned(
+                                  bottom: -0.00 *
+                                      MediaQuery.of(context).size.height,
+                                  right:
+                                      MediaQuery.of(context).size.height * 0.10,
+                                  child: Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(50.0),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 4.0, // Ancho del borde
+                                      ),
+                                    ),
+                                    child: FloatingActionButton(
+                                      shape:
+                                          const CircleBorder(eccentricity: 1),
+                                      elevation: 2,
+                                      onPressed: () {
+                                        togglePause();
+                                      },
+                                      backgroundColor: buttonColorPause,
+                                      child: const Icon(
+                                        Icons.pause,
+                                        size: 35,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                child: FloatingActionButton(
-                                  shape: const CircleBorder(eccentricity: 1),
-                                  elevation: 2,
-                                  onPressed: () {
-                                    togglePause();
-                                  },
-
-                                  backgroundColor: buttonColorPause,
-                                  child: const Icon(Icons.pause,
-                                      size:
-                                          35,color: Colors.white,), // Ajusta el color del botón según tus necesidades
-                                ),
-                              ),
-                            )
+                                )
+                              : Container()
                           : Container(),
                     ],
                   ),

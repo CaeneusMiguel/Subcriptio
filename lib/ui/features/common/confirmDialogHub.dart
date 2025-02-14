@@ -56,7 +56,7 @@ class _ConfirmDialogHubState extends State<ConfirmDialogHub> {
             controller: con.userController,
             textFieldType: TextFieldType.NAME,
             decoration:  InputDecoration(
-              labelText: "Nombre de usuario",
+              labelText: "DNI",
               labelStyle: TextStyle(color: Colors.black),
               contentPadding: const EdgeInsets.fromLTRB(30, 18, 18, 18),
               border: OutlineInputBorder(
@@ -81,7 +81,7 @@ class _ConfirmDialogHubState extends State<ConfirmDialogHub> {
             cursorColor: mainColorBlue,
             controller: con.passwordController,
             textFieldType: TextFieldType.PASSWORD,
-            obscureText: _obscurePassword, // Manejar visibilidad de contraseña
+            obscureText: _obscurePassword,
             suffix: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -140,17 +140,19 @@ class _ConfirmDialogHubState extends State<ConfirmDialogHub> {
             final storedUser = GetStorage().read('UserHub') ?? '';
             final storedPass = GetStorage().read('PassHub') ?? '';
 
-            if (con.userController.text.trim() == storedUser &&
+
+            if (con.userController.text.trim().toLowerCase() == storedUser.toLowerCase() &&
                 con.passwordController.text.trim() == storedPass) {
               con.passwordController.text = "";
               con.userController.text = "";
               widget.onConfirm();
               Navigator.of(context).pop();
-              Get.toNamed('/');
+              GetStorage().erase();
+              Get.offNamedUntil('/', (route) => false);
             } else {
               Get.snackbar(
                 'Error',
-                'Usuario o contraseña incorrectos',
+                'DNI o contraseña incorrectos',
                 backgroundColor: Colors.red,
                 colorText: Colors.white,
               );

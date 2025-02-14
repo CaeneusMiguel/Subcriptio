@@ -61,8 +61,7 @@ class _DashBoardScreenState extends State<DashBoardScreen> with WidgetsBindingOb
   }
 
   Future<void> _getConfig() async {
-    configCompany = await con.getConfigCompany();
-
+    configCompany = await con.getConfigCompany(userSession?.companyId.toString());
     if(configCompany?.holidaysManagement != userSession?.companyHolidays){
       GetStorage().erase();
       Get.offNamedUntil('/', (route) => false);
@@ -72,6 +71,7 @@ class _DashBoardScreenState extends State<DashBoardScreen> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: PageView.builder(
         controller: _pageController,
         itemBuilder: (context, index) {
@@ -105,7 +105,6 @@ class _DashBoardScreenState extends State<DashBoardScreen> with WidgetsBindingOb
               fit: BoxFit.none,
               colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             ),
-            if (userSession?.companyChekingList ?? false)
             SvgPicture.asset(
               "resources/t3_ic_msg.svg",
               height: 24,

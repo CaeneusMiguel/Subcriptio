@@ -33,10 +33,16 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   String? extension;
   bool _isSubmitAttempted = false;
   final _formKey = GlobalKey<FormState>();
+  bool isNameEmpty = true;
 
   @override
   void initState() {
     super.initState();
+    _nameController.addListener(() {
+      setState(() {
+        isNameEmpty = _nameController.text.trim().isEmpty;
+      });
+    });
     getListTypeDocument();
   }
 
@@ -142,25 +148,27 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                     },
                   ),
                   60.height,
+
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.symmetric(horizontal: 40.0),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        backgroundColor: mainColorBlue,
+                        backgroundColor: isNameEmpty
+                            ? Colors.grey[300]
+                            : mainColorBlue,
                         elevation: 2,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(
-                          side: const BorderSide(
-                              color: mainColorBlue, width: 1),
+                          side:  BorderSide(
+                              color: isNameEmpty ? Colors.grey.shade300 : mainColorBlue,
+                              width: 1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {
-                        selectFile();
-                      },
+                      onPressed: isNameEmpty ? null : selectFile,
                       child: const Text(
                         'Seleccionar Documento',
                         style: TextStyle(fontSize: 16),
@@ -174,19 +182,22 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        backgroundColor: mainGreenColorButton,
+                        backgroundColor: isNameEmpty
+                            ? Colors.grey[300]
+                            : mainGreenColorButton,
                         elevation: 2,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(
-                          side: const BorderSide(
-                              color: mainGreenColorButton, width: 1),
+                          side: BorderSide(
+                              color: isNameEmpty ? Colors.grey.shade300 : mainGreenColorButton,
+                              width: 1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {
-                        selectImage(ImageSource.camera);
-                      },
+                      onPressed: isNameEmpty
+                          ? null
+                          : () => selectImage(ImageSource.camera),
                       child: const Text(
                         'Escanear documento',
                         style: TextStyle(fontSize: 16),
@@ -296,6 +307,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
     if (image != null) {
       fileDocument = File(image.path);
+      fileName = _nameController.text.trim();
+
       setState(() {});
     } else {
       //print("No se seleccionó ninguna imagen");
@@ -317,7 +330,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     );
 
     if (pickerDocument != null) {
-      fileName = pickerDocument?.files.first.name;
+      fileName = _nameController.text.trim();
       pickedFile = pickerDocument?.files.first;
       fileDocument = File(pickedFile!.path.toString());
       setState(() {});

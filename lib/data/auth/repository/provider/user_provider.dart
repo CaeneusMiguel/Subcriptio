@@ -11,9 +11,9 @@ class UserProvider extends GetConnect {
   String url = Environment.apiUrl;
   String? token = GetStorage().read('token');
 
-  Future<Response> login(String email, String pass) async {
-    Response response = await post(
-        '$url/login_check', {'_username': email, '_password': pass},
+  Future<Response> login(String email, String pass, String device) async {
+    Response response = await post('$url/login_check',
+        {'_username': email, '_password': pass, '_type': device},
         contentType: 'application/x-www-form-urlencoded');
     if (response.body['data'] == null) {
       //Get.snackbar('Error', 'No se pudo ejecutar la peticion');
@@ -24,25 +24,28 @@ class UserProvider extends GetConnect {
   }
 
   Future<Response> loginCifCompany(
-      String email, String pass, String cif) async {
+      String email, String pass, String cif, String device) async {
     Response response = await post('$url/login_check',
-        {'_username': email, '_password': pass, '_cif': cif},
+        {'_username': email, '_password': pass, '_cif': cif, '_type': device},
         contentType: 'application/x-www-form-urlencoded');
     if (response.body['data'] == null) {
-      //Get.snackbar('Error', 'No se pudo ejecutar la peticion');
+      Get.snackbar('Error', '${response.body['message']}',
+          backgroundColor: const Color(0xFFe5133d), colorText: Colors.white);
       return response;
     }
 
     return response;
   }
 
-  Future<Response> validatorCheckin(double? lat_user, double? long_user) async {
+  Future<Response> validatorCheckin(
+      double? lat_user, double? long_user, String? idCompany) async {
     lat_user ??= 0.0;
     long_user ??= 0.0;
 
-    Response response = await post('$url/user/validationLocation', {
-      "lat_user": lat_user,
-      "long_user": long_user,
+    Response response = await post('$url/users/validate-location', {
+      "latitude": lat_user,
+      "longitude": long_user,
+      "companyId": idCompany
     }, headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json'
@@ -62,7 +65,6 @@ class UserProvider extends GetConnect {
     var request = http.MultipartRequest('POST', uri);
     request.fields['email'] = user!;
 
-// Opcional: añadir encabezados si son necesarios
     request.headers['Content-Type'] = 'multipart/form-data';
 
     var streamedResponse = await request.send();
@@ -81,13 +83,11 @@ class UserProvider extends GetConnect {
     var request = http.MultipartRequest('POST', uri);
     request.fields['email'] = user!;
 
-// Opcional: añadir encabezados si son necesarios
     request.headers['Content-Type'] = 'multipart/form-data';
 
     var streamedResponse = await request.send();
     var response = await http.Response.fromStream(streamedResponse);
 
-    print(response.body);
     if (response.body.contains('true')) {
       return "Email enviado con exito, revisa tu email para modificar tu contraseña.";
     } else {
@@ -95,8 +95,10 @@ class UserProvider extends GetConnect {
     }
   }
 
-  Future<Response> getConfigCompany() async {
-    Response response = await post('$url/user/getConfig', {}, headers: {
+  Future<Response> getConfigCompany(String? idCompany) async {
+    Response response = await post('$url/company/get-config', {
+      "companyId": idCompany
+    }, headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json'
     });
@@ -110,8 +112,8 @@ class UserProvider extends GetConnect {
 
   Future<Response> updatePassword(
       String? id, String password, String rePassword) async {
-    Response response = await post('$url/user/change-password', {
-      "user_id": id,
+    Response response = await post('$url/users/modify-password', {
+      "userId": id,
       "password": password,
       "re_password": rePassword
     }, headers: {
@@ -127,8 +129,7 @@ class UserProvider extends GetConnect {
     return response;
   }
 
-  Future<Response> updatePin(
-      String? id, String password) async {
+  Future<Response> updatePin(String? id, String password) async {
     Response response = await post('$url/users/change-pin-code', {
       "userId": id,
       "pinCode": password,
@@ -145,28 +146,65 @@ class UserProvider extends GetConnect {
     return response;
   }
 
-  Future<void> updateImage(
-      String? id_user, File? profileImg, String type) async {
+  Future<void> updateImage(String? id_user, File? profileImg) async {
     if (profileImg != null) {
-      String base64String = await imageToBase64(profileImg);
+      try {
+        final uri = Uri.parse('$url/users/update-image-admin');
+        final request = http.MultipartRequest('POST', uri);
 
-      Response response = await post('$url/user/change-image', {
-        "user_id": id_user,
-        "img": base64String,
-        "type": type
-      }, headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json'
-      });
+        request.headers.addAll({
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'multipart/form-data',
+        });
 
-      if (response.statusCode == 401) {
-        Get.snackbar('Error', 'Usuario desactivado',
-            backgroundColor: const Color(0xFFe5133d), colorText: Colors.white);
-        GetStorage().erase();
-        Get.offNamedUntil('/login', (route) => false);
-      } else if (response.statusCode != 200) {
-        //Get.snackbar('Error', 'No se pudo ejecutar la petición');
+        request.fields['userId'] = id_user ?? '';
+
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          profileImg.path,
+        ));
+
+        final response = await request.send();
+
+        if (response.statusCode == 200) {
+          final responseData = await response.stream.bytesToString();
+          print('Imagen actualizada correctamente: $responseData');
+        } else if (response.statusCode == 401) {
+          Get.snackbar(
+            'Error',
+            'Usuario desactivado',
+            backgroundColor: const Color(0xFFe5133d),
+            colorText: Colors.white,
+          );
+          GetStorage().erase();
+          Get.offNamedUntil('/login', (route) => false);
+        } else {
+          final responseData = await response.stream.bytesToString();
+          print('Error al actualizar la imagen: $responseData');
+          Get.snackbar(
+            'Error',
+            'No se pudo actualizar la imagen',
+            backgroundColor: const Color(0xFFe5133d),
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        print('Error al enviar la imagen: $e');
+        Get.snackbar(
+          'Error',
+          'Error al enviar la imagen',
+          backgroundColor: const Color(0xFFe5133d),
+          colorText: Colors.white,
+        );
       }
+    } else {
+      print('No se seleccionó ninguna imagen');
+      Get.snackbar(
+        'Error',
+        'No se seleccionó ninguna imagen',
+        backgroundColor: const Color(0xFFe5133d),
+        colorText: Colors.white,
+      );
     }
   }
 

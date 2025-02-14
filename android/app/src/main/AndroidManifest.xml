@@ -15,7 +15,7 @@
 
 
    <application
-        android:label="subcript"
+        android:label="Subcriptio"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

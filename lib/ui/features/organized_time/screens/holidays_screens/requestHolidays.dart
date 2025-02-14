@@ -150,11 +150,13 @@ class _ModalItemState extends State<ModalItem> {
             context: context,
             pickerType: DateTimePickerType.date,
             options: BoardDateTimeOptions(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.white,
               showDateButton: false,
               activeColor: mainColorBlue,
               languages: const BoardPickerLanguages.es(),
               startDayOfWeek: DateTime.sunday,
-              pickerFormat: PickerFormat.ymd,
+              pickerFormat: PickerFormat.dmy,
               boardTitle: widget.message,
               pickerSubTitles: const BoardDateTimeItemTitles(
                   year: 'Año', month: 'Mes', day: 'Dia'),

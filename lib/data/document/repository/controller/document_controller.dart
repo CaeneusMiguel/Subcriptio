@@ -25,13 +25,13 @@ class DocumentController extends GetxController {
     }*/
   }
 
-  Future<List<Document>> documentList(String? id,int page,int? month,int? year) async {
+  Future<List<Document>> documentList(String? id,int page,int? month,int? year,String? idCompany) async {
 
-    Response responseApi= await DocumentProvider().getListDocument(id,page,month,year);
+    Response responseApi= await DocumentProvider().getListDocument(id,page,month,year,idCompany);
 
     if(responseApi.body!=null){
 
-      List<Document>listdocument = Document.fromJsonList(responseApi.body['data']);
+      List<Document>listdocument = Document.fromJsonList(responseApi.body['data']['documents']);
       return listdocument;
     } else {
       Get.snackbar('Error', 'Sesión expirada,reiniciando' ,
@@ -45,10 +45,9 @@ class DocumentController extends GetxController {
   Future<String?> getImage(String? id_user) async {
 
     Response responseApi= await DocumentProvider().getDownloadImg(id_user);
-
     if(responseApi.body!=null){
 
-      String? img = responseApi.body['data'];
+      String? img = responseApi.body['data'][0];
       return img;
     } else {
       Get.snackbar('Error', 'Sesión expirada,reiniciando' ,

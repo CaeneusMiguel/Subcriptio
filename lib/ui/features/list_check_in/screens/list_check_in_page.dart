@@ -72,7 +72,7 @@ class _ChekingsState extends State<Chekings> with TickerProviderStateMixin {
       });
 
       List<ListCheking> newChekings =
-          await con.chekingList(_currentPage, monthFinal, yearFinal);
+          await con.chekingList(userSession?.companyId.toString(),_currentPage, monthFinal, yearFinal);
       if (newChekings.isEmpty) {
         setState(() {
           _hasMoreData = false;

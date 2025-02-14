@@ -8,29 +8,29 @@ class Document {
   int id;
   String nombre;
   String file;
-  CreateDate createDate;
+  String createDate;
   bool? isSignTemplate;
   bool? isSigned;
-  double? startX;
-  double? startY;
-  double? width;
-  double? height;
+  double? userStartX;
+  double? userStartY;
+  double? userWidth;
+  double? userHeight;
 
   Document(
       {required this.id,
       required this.nombre,
       required this.file,
       required this.createDate,
-      this.height,
-      this.width,
+      this.userHeight,
+      this.userWidth,
       this.isSigned,
       this.isSignTemplate,
-      this.startX,
-      this.startY});
+      this.userStartX,
+      this.userStartY});
 
   static List<Document> fromJsonList(List<dynamic> jsonList) {
     List<Document> toList = [];
-    jsonList[0].forEach((element) {
+    jsonList.forEach((element) {
       Document document = Document.fromJson(element);
       toList.add(document);
     });
@@ -42,48 +42,26 @@ class Document {
       id: json["id"],
       nombre: json["name"],
       file: json["file"],
-      createDate: CreateDate.fromJson(json["create_date"]),
-      height: json["height"]?.toDouble(),
-      width: json["width"]?.toDouble(),
+      createDate: json["create_date"],
+      userHeight: json["height"]?.toDouble(),
+      userWidth: json["width"]?.toDouble(),
       isSigned: json["isSigned"],
       isSignTemplate: json["isSignTemplate"],
-      startX: json["startX"]?.toDouble(),
-      startY: json["startY"]?.toDouble());
+      userStartX: json["startX"]?.toDouble(),
+      userStartY: json["startY"]?.toDouble());
 
   Map<String, dynamic> toJson() => {
         "id": id,
         "nombre": nombre,
         "file": file,
-        "create_date": createDate.toJson(),
-        "height": height,
-        "width": width,
+        "create_date": createDate,
+        "height": userHeight,
+        "width": userWidth,
         "isSigned": isSigned,
         "isSignTemplate": isSignTemplate,
-        "startX": startX,
-        "startY": startY
+        "startX": userStartX,
+        "startY": userStartY
       };
 }
 
-class CreateDate {
-  DateTime date;
-  int timezoneType;
-  String timezone;
 
-  CreateDate({
-    required this.date,
-    required this.timezoneType,
-    required this.timezone,
-  });
-
-  factory CreateDate.fromJson(Map<String, dynamic> json) => CreateDate(
-        date: DateTime.parse(json["date"]),
-        timezoneType: json["timezone_type"],
-        timezone: json["timezone"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "date": date.toIso8601String(),
-        "timezone_type": timezoneType,
-        "timezone": timezone,
-      };
-}

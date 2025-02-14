@@ -12,7 +12,7 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Los permisos de geolocalización son necesarios para el inicio de su jornada laboral</string>
 	<key>CFBundleDisplayName</key>
-	<string>Subcript</string>
+	<string>Subcriptio</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Necesito permiso para acceder a la camara, para cambiar la imagen de perfil</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -59,12 +59,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>com.apple.developer.nfc.readersession.formats</key>
-    <array>
-      <string>NDEF</string>
-    </array>
-    <key>NFCReaderUsageDescription</key>
-    <string>Necesitamos acceso a NFC para leer y escribir tarjetas.</string>
+
 
 </dict>
 </plist>

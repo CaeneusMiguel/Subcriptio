@@ -78,7 +78,6 @@ class _RecoverPinHubState extends State<RecoverPinHub> {
                   pVertical: 15,
                   borderSize: 6,
                   onPressed: () async {
-                    print(con.emailController.text);
                     await UserProvider()
                         .recoverPinHub(con.emailController.text)
                         .then((value) {
